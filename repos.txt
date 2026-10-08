@@ -1,0 +1,13 @@
+dash	https://github.com/magnars/dash.el.git
+elcord	git@github.com:Mstrodl/elcord.git
+emacs-neotree	git@github.com:jaypei/emacs-neotree.git
+evil	https://github.com/emacs-evil/evil.git
+f	https://github.com/rejeep/f.el.git
+ht	https://github.com/Wilfred/ht.el.git
+hydra	https://github.com/abo-abo/hydra.git
+lsp-mode	git@github.com:emacs-lsp/lsp-mode.git
+markdown-mode	https://github.com/jrblevin/markdown-mode.git
+nerd-icons	https://github.com/rainstormstudio/nerd-icons.el.git
+s	https://github.com/magnars/s.el.git
+slime	https://github.com/slime/slime.git
+spinner	https://github.com/Malabarba/spinner.el.git
