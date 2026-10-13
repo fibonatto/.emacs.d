@@ -1,7 +1,8 @@
 ;;; init-treesit.el --- Tree-sitter configuration -*- lexical-binding: t; -*-
 
 (require 'treesit)
-(require 'treesit-x)
+
+(declare-function treesit-generic-mode-setup "treesit-x")
 
 (setq treesit-font-lock-level 4)
 
@@ -31,6 +32,7 @@
 
 (define-derived-mode bend-ts-mode prog-mode "Bend"
   "Major mode for Bend 2 using Tree-sitter."
+  (require 'treesit-x)
   (treesit-generic-mode-setup 'bend2)
   (treesit-major-mode-setup))
 

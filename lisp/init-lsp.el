@@ -1,13 +1,13 @@
 ;;; init-lsp.el --- Eglot -*- lexical-binding: t; -*-
 
-(require 'eglot)
+(defvar eglot-ignored-server-capabilities)
 
-(setq eglot-sync-connect nil
-      eglot-autoshutdown t
-      eglot-events-buffer-config '(:size 0))
-
-(add-to-list 'eglot-ignored-server-capabilities
-             :workspace/didChangeWatchedFiles)
+(with-eval-after-load 'eglot
+  (setq eglot-sync-connect nil
+        eglot-autoshutdown t
+        eglot-events-buffer-config '(:size 0))
+  (add-to-list 'eglot-ignored-server-capabilities
+               :workspace/didChangeWatchedFiles))
 
 (dolist (hook '(c-ts-mode-hook
                 c++-ts-mode-hook
@@ -19,7 +19,7 @@
   (add-hook hook #'eglot-ensure))
 
 (defun sb/format-buffer ()
-  (when (eglot-managed-p)
+  (when (and (featurep 'eglot) (eglot-managed-p))
     (eglot-format-buffer)))
 
 (add-hook 'before-save-hook #'sb/format-buffer)

@@ -276,6 +276,7 @@ Keys are Emacs major mode names."
     ("java-mode" . "javac % && java -cp %:h %:t:r")
     ("js-mode" . "bun run %")
     ("js-ts-mode" . "bun run %")
+    ("lisp-mode" . "sbcl --script %")
     ("typescript-mode" . "bun run %")
     ("typescript-ts-mode" . "bun run %")
     ("julia-mode" . "julia %")
@@ -316,6 +317,7 @@ Keys are Emacs major mode names."
     ("js-ts-mode" . "node %")
     ("julia-mode" . "julia -O3 %")
     ("kotlin-mode" . "kotlinc % -include-runtime -d %:r.jar && java -server -jar %:r.jar")
+    ("lisp-mode" . "sbcl --script %")
     ("nim-mode" . "nim compile --opt:speed --run %")
     ("ocaml-mode" . "ocamlopt -O3 -o %:r % && ./%:r")
     ("pascal-mode" . "fpc -O3 % && ./%:r")
@@ -425,8 +427,9 @@ Keys are Emacs major mode names."
 
     ;; Substitui shell-quote-argument por envelopamento em aspas simples para
     ;; preservar a estrutura do pipeline quando repassado ao sh -c.
-    (let* ((quoted-script (format "'%s'" (replace-regexp-in-string "'" "'\\''" script)))
-           (body (concat "sh -c " quoted-script)))
+    (let* ((quoted-script
+        (format "'%s'" (replace-regexp-in-string "'" "'\\''" script t t)))
+       (body (concat "sh -c " quoted-script)))
       
       ;; Remoção do "clear && ". 
       ;; A limpeza nativa do shell falha no TERM=dumb do comint-mode e causava 
@@ -740,7 +743,7 @@ Keys are Emacs major mode names."
   "Keymap for `run-code-mode`.")
 
 (with-eval-after-load 'evil
-  (evil-define-key 'normal run-code-mode-map
+  (evil-define-key* 'normal run-code-mode-map
     (kbd "r") #'run-code-dev
     (kbd "R") #'run-code-opt
     (kbd "t") #'run-code-tmux

@@ -1,10 +1,14 @@
 ;;; init-keymaps.el --- Key bindings -*- lexical-binding: t; -*-
 
 ;;; Windows
+(require 'evil)
+(require 'init-helpers) ;
 
 (windmove-default-keybindings 'control)
 
-(evil-define-key 'normal 'global
+(global-set-key (kbd "M-d") #'elcord-mode)
+
+(evil-define-key* 'normal 'global
   (kbd "C-h") #'windmove-left
   (kbd "C-j") #'windmove-down
   (kbd "C-k") #'windmove-up
@@ -16,23 +20,23 @@
 
 ;;; Editing
 
-(evil-define-key 'normal 'global
+(evil-define-key* 'normal 'global
   (kbd "U") #'evil-redo
   (kbd "m") #'evil-jump-item
   (kbd "(") #'sb/dedent-line
   (kbd ")") #'sb/indent-line)
 
-(evil-define-key 'visual 'global
+(evil-define-key* 'visual 'global
   (kbd "<") #'sb/shift-left-keep
   (kbd ">") #'sb/shift-right-keep
   (kbd "S") #'sb/visual-sort)
 
-(evil-define-key '(normal visual) 'global
+(evil-define-key* '(normal visual) 'global
   (kbd "!") #'sb/comment-toggle)
 
 ;;; Movement
 
-(evil-define-key '(normal visual) 'global
+(evil-define-key* '(normal visual) 'global
   (kbd "J") (lambda () (interactive) (sb/smart-jump 1))
   (kbd "K") (lambda () (interactive) (sb/smart-jump -1))
   (kbd "H") #'evil-backward-WORD-begin
@@ -74,7 +78,7 @@
 
 ;;; Build and quickfix
 
-(evil-define-key 'normal 'global
+(evil-define-key* 'normal 'global
   (kbd "<f5>")  #'sb/make
   (kbd "<f6>")  #'sb/copen
   (kbd "<f7>")  #'next-error
@@ -83,37 +87,127 @@
 
 ;;; LSP
 
-(evil-define-key 'normal 'global
+(evil-define-key* 'normal 'global
   (kbd "gd") #'xref-find-definitions
   (kbd "gr") #'xref-find-references
   (kbd "[d") #'flymake-goto-prev-error
   (kbd "]d") #'flymake-goto-next-error)
 
 (with-eval-after-load 'eglot
-  (evil-define-key 'normal eglot-mode-map
+  (evil-define-key* 'normal eglot-mode-map
     (kbd "gi") #'eglot-find-implementation))
+
+
+;;; NeoTree
+
+(defun sb/neotree-toggle ()
+  "Toggle NeoTree and move point to the end of the current line when opening."
+  (interactive)
+  (require 'neotree)
+  (let ((was-open (neo-global--window-exists-p)))
+    (neotree-toggle)
+    (when (and (not was-open)
+               (neo-global--window-exists-p))
+      (with-selected-window neo-global--window
+        (end-of-line)))))
+
+(defun sb/neotree-up-directory ()
+  "Change NeoTree's root to its parent directory."
+  (interactive)
+  (neo-global--select-window)
+  (let* ((root (file-name-as-directory
+                (expand-file-name neo-buffer--start-node)))
+         (parent (file-name-directory
+                  (directory-file-name root))))
+    (unless (equal (directory-file-name root)
+                   (directory-file-name parent))
+      (neo-buffer--change-root parent)
+      (end-of-line))))
+
+;;; NeoTree
+
+(defun sb/neotree-enter (&optional arg)
+  "Open the selected file or toggle the selected directory.
+  Keep point at the end of the line when opening a directory."
+  (interactive "P")
+  (neo-global--select-window)
+  (let ((path (neo-buffer--get-filename-current-line)))
+    (neo-buffer--execute arg 'neo-open-file 'neo-open-dir)
+    (when (and path
+               (file-directory-p path)
+               (window-live-p neo-global--window))
+      (with-selected-window neo-global--window
+        (end-of-line)))))
+
+(defun sb/neotree-resize (delta)
+  "Resize NeoTree horizontally by DELTA columns."
+  (neo-global--select-window)
+  (neo-buffer--unlock-width)
+  (unwind-protect
+      (enlarge-window-horizontally delta)
+    (neo-buffer--lock-width))
+  (setq neo-window-width (window-width)))
+
+(defun sb/neotree-resize-left ()
+  "Decrease NeoTree width by four columns."
+  (interactive)
+  (sb/neotree-resize -4))
+
+(defun sb/neotree-resize-right ()
+  "Increase NeoTree width by four columns."
+  (interactive)
+  (sb/neotree-resize 4))
+
+(defun sb/neotree-mode-setup ()
+  "Disable automatic point positioning in NeoTree."
+  (setq-local neo-auto-indent-point nil)
+  (remove-hook 'post-command-hook
+               #'neo-hook--node-first-letter
+               t))
 
 ;;; Navigation panels
 
-(evil-define-key 'normal 'global
+(evil-define-key* 'normal 'global
   (kbd "C-p") #'project-find-file
-  (kbd "M-a") #'neotree-toggle
+  ;; (kbd "M-a") #'neotree-toggle
+  (kbd "M-a") #'sb/neotree-toggle
   (kbd "<f8>") #'imenu-list-smart-toggle)
 
 (global-set-key [f8] #'neotree-toggle)
 
+;; (with-eval-after-load 'neotree
+;;   (evil-define-key* 'normal neotree-mode-map
+;;     (kbd "RET")
+;;     (lambda (&optional arg)
+;;       (interactive "P")
+;;       (neo-global--select-window)
+;;       (neo-buffer--execute arg 'neo-open-file 'neo-open-dir))))
+
 (with-eval-after-load 'neotree
-  (evil-define-key 'normal neotree-mode-map
-    (kbd "RET")
-    (lambda (&optional arg)
-      (interactive "P")
-      (neo-global--select-window)
-      (neo-buffer--execute arg 'neo-open-file 'neo-open-dir))))
+  (setq neo-auto-indent-point nil)
+
+  (add-hook 'neotree-mode-hook #'sb/neotree-mode-setup)
+
+  (evil-define-key* 'normal neotree-mode-map
+    (kbd "RET") #'sb/neotree-enter
+
+    (kbd "DEL")         #'sb/neotree-up-directory
+    (kbd "<backspace>") #'sb/neotree-up-directory
+    (kbd "<delete>")    #'sb/neotree-up-directory
+
+    (kbd "<left>")  #'sb/neotree-resize-left
+    (kbd "<right>") #'sb/neotree-resize-right))
 
 ;;; Appearance
 
-(evil-define-key 'normal 'global
+(evil-define-key* 'normal 'global
   (kbd "M-t") #'terrazzo-toggle)
+
+;;; org
+(with-eval-after-load 'org
+  (evil-define-key* 'normal org-mode-map
+    (kbd "TAB")       #'org-cycle
+    (kbd "<backtab>") #'org-shifttab))
 
 (provide 'init-keymaps)
 ;;; init-keymaps.el ends here

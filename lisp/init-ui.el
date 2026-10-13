@@ -15,7 +15,9 @@
   (add-hook hook #'sb/disable-line-numbers))
 
 (dolist (hook '(prog-mode-hook text-mode-hook))
-  (add-hook hook #'display-fill-column-indicator-mode))
+  (add-hook hook #'display-fill-column-indicator-mode)
+  (add-hook 'text-mode-hook #'visual-line-mode)
+  )
 
 (unless standard-display-table
   (setq standard-display-table (make-display-table)))

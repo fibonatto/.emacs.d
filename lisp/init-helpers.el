@@ -1,6 +1,8 @@
 ;;; init-helpers.el --- sb/ helper functions -*- lexical-binding: t; -*-
 
 (require 'cl-lib)
+(require 'evil)
+(require 'compile)
 
 ;;; Compatibility
 
@@ -35,7 +37,7 @@ FMT and ARGS are passed to `format'. The directory is created if missing."
 
 (defun sb/leader (key def &optional states)
   "Bind leader (,) KEY to DEF in STATES (default: normal)."
-  (evil-define-key (or states 'normal) 'global
+  (evil-define-key* (or states 'normal) 'global
     (kbd (concat "," key))
     def))
 

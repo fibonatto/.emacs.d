@@ -64,7 +64,8 @@
   (start-render))
 
 (defun start-field-open ()
-  "Open recent file N, or the typed file name (created if missing)."
+  "Open recent file N, or the typed file name (created if missing).
+`:q' and `exit' quit Emacs immediately, without asking."
   (interactive)
   (let* ((name (string-trim start--input))
          (n (and (string-match-p "\\`[0-9]+\\'" name)
@@ -72,6 +73,8 @@
          (recent (and n (>= n 1) (nth (1- n) start--files))))
     (cond
      ((string-empty-p name))
+     ((member name '(":q" "exit"))
+      (kill-emacs))
      ((string-match-p "[[:space:]]" name)
       (start-field-clear))
      (recent
@@ -233,8 +236,12 @@
 (recentf-mode 1)
 
 (setq inhibit-startup-screen t
-      initial-scratch-message nil
-      initial-buffer-choice #'start-render)
+      initial-scratch-message nil)
+
+(let ((positional (seq-remove (lambda (a) (string-prefix-p "-" a))
+                              (cdr command-line-args))))
+  (when (null positional)
+    (setq initial-buffer-choice #'start-render)))
 
 (add-hook 'window-size-change-functions #'start--on-resize)
 
